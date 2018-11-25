@@ -24,11 +24,12 @@ mongoose.connect(secret.database, function(err){
     }
 });
 
+//seeder();
 
 const storage = multer.diskStorage({
-    destination: './public/imagestore/',
+    destination: './public/person/',
     filename: function(req, file, cb){
-      cb(null,req.session.user._id + '-' + Date.now() + path.extname(file.originalname));
+      cb(null,"image" + '-' + Date.now() + path.extname(file.originalname));
     }
   });
 
@@ -66,7 +67,7 @@ app.get("/fetchData/:ITI", function(req,res){
         } 
         else if(!iti) invalidreq(res);
         else {
-            Person.find({iti: iti}).populate("course", "iti").exec(function(err,people){
+            Person.find({iti: iti}).populate("course").populate("iti").exec(function(err,people){
                 if(err) {
                     console.log("fail at fin");
                     handleerror(res);
@@ -83,6 +84,20 @@ app.get("/fetchData/:ITI", function(req,res){
 
 })
 
+app.get("/search", function(req,res){
+    Person.find({name: {$regex: "^.*"+req.query.key+".*$", $options: 'i' }}).populate("course").populate("iti").exec(function(err,result){
+        if(err){
+            handleerror(res);
+        }
+        else{
+            res.json({
+                success: true,
+                result: result
+            })
+        }
+    })
+})
+
 app.get('/iti', function(req,res){
         ITI.find({}, function(err,itis){
             if(err) handleerror(res);
@@ -95,50 +110,72 @@ app.get('/iti', function(req,res){
         })
 });
 
+app.get('/list', function(req,res){
+    Course.find({},function(err,courses){
+        if(err) handleerror(res);
+        else{
+            ITI.find({}, function(err,itis){
+                if(err) handleerror(res);
+                else{
+                    res.json({
+                        success: true,
+                        itis: itis,
+                        courses:courses
+                    })
+                }
+            })
+        }
+    })
+})
+
 app.post('/addperson', function(req,res){
-    if(!req.body.name||!req.body.experience||!req.body.course||!req.body.iti||!req.body.image||!req.body.year){
-        invalidreq(res);
-    }
-    else{
-        ITI.findById({_id:req.body.iti},function(err,iti){
-            if(err) handleerror(res);
-            else if(!iti) invalidreq(res);
-            else{
-                Course.findById({_id:req.body.course}, function(err,course){
-                    if(err) handleerror(res);
-                    else if(!course) invalidreq(res);
-                    else{
-                        const person = new Person();
-                        person.name=req.body.name;
-                        person.experience=req.body.experience;
-                        person.course=req.body.course;
-                        person.iti=req.body.iti;
-                        person.year=req.body.year;
-                        if(req.file){
-                            upload(req,res,function(err){
-                                if(err) handleerror(res);
-                                else{
-                                    person.picture=req.file.path.toString();
+    upload(req,res,function(err){
+        if(err) handleerror(err);
+        else if(!req.body.name||!req.body.experience||!req.body.job||!req.body.course||!req.body.iti||!req.body.year){
+            console.log("fail at validation");
+            console.log(req.name);
+            invalidreq(res);
+        }
+        else{
+            ITI.findById(req.body.iti,function(err,iti){
+                if(err){
+                    console.log(req.body.iti);
+                    console.log("fail at iti err");
+                    handleerror(res);
+                } 
+                else if(!iti) 
+                {
+                    console.log("fail at iti")
+                    invalidreq(res);
+                }
+                else{
+                    Course.findById(req.body.course, function(err,course){
+                        if(err) handleerror(res);
+                        else if(!course) {
+                            console.log("fail at course");
+                            invalidreq(res);
+                        }
+                        else{
+                            const person = new Person();
+                            person.name=req.body.name;
+                            person.experience=req.body.experience;
+                            person.course=req.body.course;
+                            person.iti=req.body.iti;
+                            person.year=req.body.year;
+                            person.job=req.body.job;
+
+                                    person.picture="/"+req.file.path.toString();
                                     person.save();
                                     res.json({
                                         success: true,
                                         message: "Successfully added new person!"
                                     })
-                                }
-                            }) 
                         }
-                        else{
-                            person.save();
-                            res.json({
-                                success: true,
-                                message: "Successfully added new person!"
-                            })
-                        }
-                    }
-                })
-            }
-        })
-    }
+                    })
+                }
+            })
+        }
+    })
 })
 
 function invalidreq(res){
@@ -155,6 +192,6 @@ function handleerror(res){
     })
 }
 
-app.listen(3000, process.env.IP, function(){
+app.listen(8000, process.env.IP, function(){
     console.log("server started");
 })

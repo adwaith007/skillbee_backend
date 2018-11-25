@@ -3,7 +3,8 @@ const mongoose=require("mongoose");
 const itischema=mongoose.Schema(
     {
         name: String,
-        image: String
+        image: String,
+        desc: String
     }
 );
 

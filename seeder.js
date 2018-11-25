@@ -7,6 +7,7 @@ function seeder(){
     //     const iti= new ITI();
     //     iti.name="ITI "+i;
     //     iti.image="/ITI/image"+i+".jpg";
+    //      iti.desc="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
     //     iti.save();
     // }
 
@@ -26,7 +27,7 @@ function seeder(){
                         for(var i=0;i<10;i++){
                            const person= new Person();
                            person.name="Name "+i;
-                           person.picture="/person/image"+Math.floor(Math.random() * 6)+".jpg";
+                           person.picture="/person/image"+(Math.floor(Math.random() * 5)+1)+".jpg";
                            person.experience=Math.floor(Math.random() * 4);  
                            person.year="200"+Math.floor(Math.random() * 10);
                            person.iti=itis[Math.floor(Math.random() * 5)];
